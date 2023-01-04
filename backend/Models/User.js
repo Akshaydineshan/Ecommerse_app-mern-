@@ -1,10 +1,11 @@
 const mongoose = require("mongoose");
-const validator =require('validator')
-let bcrypt=require('bcryptjs')
-const jwt =require("jsonwebtoken")
-const dotenv=require("dotenv")
+const validator = require('validator')
+let bcrypt = require('bcryptjs')
+const jwt = require("jsonwebtoken")
+const dotenv = require("dotenv")
+const crypto = require("crypto")
 dotenv.config({
-  path:'../config/.env'
+  path: '../config/.env'
 })
 
 
@@ -45,29 +46,48 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: Date.now(),
   },
-  resetPasswordToken:String,
-  resetpasswordtime:Date,
- 
+  resetPasswordToken: String,
+  resetpasswordtime: { type: Date }
+
 });
 
-//hash password
-userSchema.pre("save", async function(next){
+// hash password
+userSchema.pre("save", async function (next) {
+
+
+  if (!this.isModified("password")) {
+    // console.log("akshay",this.isModified('password'));
+    next();
+  }
 
   this.password = await bcrypt.hash(this.password, 10);
 });
 
-//jwt
- userSchema.methods.getJwtToken=function(){
-  return jwt.sign({id:this._id},process.env.jwtSecretKey)
- }
- //compare
- userSchema.methods.comparePassword=async function(enteredPassword){
-  console.log(this);
-  return  bcrypt.compare(enteredPassword,this.password);
+// jwt
+userSchema.methods.getJwtToken = function () {
+  return jwt.sign({ id: this._id }, process.env.jwtSecretKey)
+}
+//compare
+userSchema.methods.comparePassword = async function (enteredPassword) {
+
+  return bcrypt.compare(enteredPassword, this.password);
 };
-// userSchema.methods.comparePassword = async function (enteredPassword) {
-//   return await bcrypt.compare(enteredPassword,this.password);
-// };
+
+//forgot password
+userSchema.methods.getResetToken = function () {
+
+  //genarate token
+  const resetToken = crypto.randomBytes(20).toString("hex")
+  //hash
+  this.resetPasswordToken = crypto.createHash("sha256").update(resetToken).digest('hex')
+   this.resetPasswordTime = Date.now() + 15 * 600 * 1000;
+
+
+
+
+  return resetToken
+
+}
 
 
 module.exports = mongoose.model("User", userSchema);

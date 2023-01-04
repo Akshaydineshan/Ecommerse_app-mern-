@@ -46,5 +46,5 @@ app.use(ErrorHandler)
 
 
 app.listen(process.env.PORT,()=>{
-   console.log(`server started  http://localhost:${process.env.PORT}`);
+    console.log(`server started  http://localhost:${process.env.PORT}`);
 })

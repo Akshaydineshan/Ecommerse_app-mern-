@@ -4,6 +4,12 @@ const ErrorHandler = require('../utils/errorhandler')
 const CatchAsyncError = require('../Middleware/CatchAsyncError')
 const User = require('../Models/User')
 
+// const catchAsyncErrors = require("../middleware/catchAsyncErrors");
+// const sendToken = require("../utils/jwtToken.js");
+const sendMail = require("../utils/sendMail");
+const sendToken =require('../utils/jwtToken')
+const crypto=require("crypto")
+
 
 
 exports.createUser = async (req, res, next) => {
@@ -18,12 +24,9 @@ exports.createUser = async (req, res, next) => {
             url: "http//test.com"
         }
     })
-    const token = user.getJwtToken()
-    res.status(200).cookie("token",token).json({
-        success: true,
-
-        token
-    })
+    sendToken(user,201,res,"creating user account successfully")
+  
+   
 }
 
 
@@ -39,24 +42,84 @@ exports.loginUser = async (req, res, next) => {
         return next(new ErrorHandler("user not found", 400));
     }
     const isPasswordMatched = await user.comparePassword(password);
-  
-    if(!isPasswordMatched ){
-        return next(new ErrorHandler("massword mismatch", 400));
-     }
-   
-     const token = user.getJwtToken()
-     res.status(200).cookie("token",token).json({
-         success: true,
-         token,
-        
-     })
 
+    if (!isPasswordMatched) {
+        return next(new ErrorHandler("massword mismatch", 400));
+    }
+    sendToken(user,201,res,"user login success")
+  
 
 }
 
-exports.logoutUser =async(req,res,next)=>{
-    res.cookie("token",null,{expires:new Date(Date.now()),httpOnly:true}).status(200).json({
-        success:true,
-        message:"logout success"
+exports.logoutUser = async (req, res, next) => {
+    res.cookie("token", null, { expires: new Date(Date.now()), httpOnly: true }).status(200).json({
+        success: true,
+        message: "logout success"
     })
+}
+
+exports.forgotPassword = async (req, res, next) => {
+
+    const user = await User.findOne({ email: req.body.email })
+
+
+    if (!user) {
+        return next(new ErrorHandler("user not found this email", 400));
+    }
+    const resetToken = user.getResetToken()
+    await user.save({
+        validateBeforeSave: false,
+    });
+
+    const resetPasswordUrl = `${req.protocol}://${req.get(
+        "host"
+    )}/password/reset/${resetToken}`;
+
+    const message = `Your password reset token is :- \n\n ${resetPasswordUrl}`;
+
+    try {
+        await sendMail({
+            email: user.email,
+            subject: `Ecommerce Password Recovery`,
+            message,
+        });
+
+        res.status(200).json({
+            success: true,
+            message: `Email sent to ${user.email} succesfully`,
+        });
+    } catch (error) {
+        user.resetPasswordToken = undefined;
+        user.resetPasswordTime = undefined;
+
+        await user.save({
+            validateBeforeSave: false,
+        });
+
+        return next(new ErrorHandler(error.message, 500));
+    }
+}
+
+
+exports.resetPassword =async(req,res,next)=>{
+    const resetPasswordToken =crypto.createHash("sha256").update(req.params.token).digest('hex')
+
+    const user =await User.findOne({
+        resetPasswordToken,
+        resetPasswordTime:{$gt:Date.now()}
+    })
+
+    if(!user){
+        return next(new ErrorHandler("reset token error or expired", 400));
+    }
+    if(req.body.password != req.body.confirmPassword){
+        return next(new ErrorHandler("password not match confim password", 400));
+    }
+
+    user.password =req.body.password;
+    user.resetPasswordToken =undefined;
+    user.resetpasswordtime =undefined;
+     await user.save()
+     
+     sendToken(user,201,res,"password reset successfully")
 }
