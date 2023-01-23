@@ -19,7 +19,7 @@ class Features {
     filter() {
        
         const queryCopy = { ...this.queryStr }
-        const remove = ["keyword"];
+        const remove = ["keyword","page"];
         remove.forEach((val) => {
             delete queryCopy[val]
 

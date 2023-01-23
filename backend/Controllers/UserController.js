@@ -123,3 +123,104 @@ exports.resetPassword =async(req,res,next)=>{
      
      sendToken(user,201,res,"password reset successfully")
 }
+
+//get user details
+
+exports.userDetails=async(req,res,next)=>{
+
+    const user =await User.findById(req.user.id)
+
+    res.status(200).json({
+        success:true,
+        message:"get user details",
+        user
+
+    })
+
+}
+
+//update password
+
+exports.updatePassword=async(req,res,next)=>{
+    const user =await User.findById(req.user.id).select('+password')
+
+    const isPasswordMatched= await user.comparePassword(req.body.oldPassword)
+    if(!isPasswordMatched){
+        return next(new ErrorHandler("old password in currect", 400));
+    }
+  
+    if(req.body.newPassword != req.body.confirmPassword){
+        return next(new ErrorHandler("password not match confim password", 400));
+    }
+
+    user.password =req.body.newPassword
+
+    await user.save()
+    sendToken(user,201,res,"password updated")
+
+}
+
+exports.updateProfile =async(req,res,next)=>{
+    let updatedData={
+       name:req.body.name,
+       email:req.body.email
+    }
+
+    const user =await User.findByIdAndUpdate(req.user.id,updatedData,{new:true})
+
+    sendToken(user,201,res,"profile updated")
+}
+
+//get all user 
+
+exports.getAllUser =async(req,res,next)=>{
+    const users =await User.find()
+    
+    res.status(200).json({
+        success:true,
+        message:"get all users",
+        users
+
+    })
+}
+
+//get all  single user 
+
+exports.getSingleUser =async(req,res,next)=>{
+    const user =await User.findById(req.params.id)
+    
+    res.status(200).json({
+        success:true,
+        message:"get allsingle user",
+        user
+
+    })
+}
+
+//change user role
+
+
+exports.changeUserRole =async(req,res,next)=>{
+    let updatedData={
+       name:req.body.name,
+       email:req.body.email,
+       role:req.body.role
+    }
+
+    const user =await User.findByIdAndUpdate(req.params.id,updatedData,{new:true})
+
+    sendToken(user,201,res,"profile updated")
+}
+
+//delete user
+
+exports.deleteUser =async(req,res,next)=>{
+    const user =await User.findByIdAndRemove(req.params.id)
+    
+    res.status(200).json({
+        success:true,
+        message:"delete user",
+        user
+
+    })
+}

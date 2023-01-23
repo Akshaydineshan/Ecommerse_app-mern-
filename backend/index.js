@@ -32,10 +32,12 @@ mongoose.connect(process.env.DB,{useNewUrlParser: true,}).then((data)=>{
 
 const productRoute=require('./Routes/ProductRoute')
 const userRoute=require('./Routes/UserRoutes')
+const orderRoute=require('./Routes/OrderRouter')
 
 
 app.use('/api/v2',productRoute)
-app.use('/api/v2/',userRoute)
+app.use('/api/v2',userRoute)
+app.use('/api/v2',orderRoute)
 app.use(ErrorHandler)
 
 

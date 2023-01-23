@@ -1,0 +1,45 @@
+
+
+ul a {
+    margin-left: 30px;
+    color:black;
+    list-style: none;
+    text-decoration: none;
+    font-size: 18px;
+    transition:0.1s;
+}
+ul a:hover{
+    /* transform: scale(1.099); */
+    /* background-color: rgb(54, 99, 146);
+    color:white;
+    border-radius: 9px;
+    padding:3px; */
+    color:black;
+  
+    
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    border-bottom:3px solid black;
+
+}
+span .ic:hover{
+    transform: scale(1.01);
+}
+.count{
+    background-color: rgb(128, 206, 86);
+ position: relative;
+ right:10px;
+ top:16px;
+ padding:2px;
+ border-radius: 13px;
+
+    
+}
+.banner-txt{
+    color:white;
+    position:absolute;
+    top:260px;
+    left:1000px;
+    z-index: 1;
+}
